@@ -1,24 +1,22 @@
 package orderedMaps
 
-import "reflect"
-
-type orderedMap struct {
+type OrderedMap struct {
 	values map[string]interface{}
 	keys   []string
 }
 
-func MakeOrderedMap() *orderedMap {
-	return &orderedMap{
+func MakeOrderedMap() *OrderedMap {
+	return &OrderedMap{
 		make(map[string]interface{}),
 		[]string{},
 	}
 }
 
-func (m *orderedMap) Keys() []string {
+func (m *OrderedMap) Keys() []string {
 	return m.keys
 }
 
-func (m *orderedMap) Values() []interface{} {
+func (m *OrderedMap) Values() []interface{} {
 	values := []interface{}{}
 
 	for _, k := range m.keys {
@@ -28,29 +26,37 @@ func (m *orderedMap) Values() []interface{} {
 	return values
 }
 
-func (m *orderedMap) Set(key string, value interface{}) {
-	// Add new key if stored value is not nil
-	keyExists := !reflect.ValueOf(m.values[key]).IsNil()
-	valueExists := !reflect.ValueOf(value).IsNil()
-	if !keyExists && valueExists {
-		m.keys = append(m.keys, key)
+func (m *OrderedMap) Set(key string, value interface{}) {
+	// Check if the key already exists
+	keyExists := false
+	for _, k := range m.keys {
+		if k == key {
+			keyExists = true
+			break
+		}
 	}
 
-	// Remove key if value is nil and the key exists
-	if keyExists && !valueExists {
-		keys := []string{}
-		for _, k := range keys {
-			if k != key {
-				keys = append(keys, k)
-			}
-		}
-		m.keys = keys
+	if !keyExists {
+		m.keys = append(m.keys, key)
 	}
 
 	m.values[key] = value
 }
 
-func (m *orderedMap) Range(onIteration func(key string, value interface{}) bool) {
+func (m *OrderedMap) Remove(key string) {
+	m.values[key] = nil
+
+	rIndex := -1
+	for i, k := range m.keys {
+		if k == key {
+			rIndex = i
+			break
+		}
+	}
+	m.keys = append(m.keys[:rIndex], m.keys[rIndex+1:]...)
+}
+
+func (m *OrderedMap) Range(onIteration func(key string, value interface{}) bool) {
 	for _, k := range m.keys {
 		if !onIteration(k, m.values[k]) {
 			return
